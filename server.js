@@ -2,20 +2,35 @@
 
 require('dotenv').config()
 const express = require('express');
-const cors = require('cors')
+const superagent = require('superagent');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.use(cors());
+
+// Route Definitions
 
 app.get('/location', (request, response) => {
-  const geoData = require('./data/geo.json');
-  const city = request.query.data;
-  if (geoData.results[0].address_components[0].long_name === city){
-    const locationData = new Location(city,geoData);
-    response.send(locationData);
-  } else{
-    response.send('Josh is amazeballs. ERROR 500!!!!!!!')
-  }
+  // const geoData = require('./data/geo.json');
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${request.query.data}&key=${process.env.GEOCODE_API_KEY}`;
+  superagent.get( url )
+    .then( data => {
+      const rawData = data.body;
+      const location = new Location(request.query.data, rawData);
+      response.status(200).json(location);
+    })
+    .catch( () => {
+      errorHandler('So sorry, something went wrong.', request, response);
+    });
+
+  // const city = request.query.data;
+  // if (geoData.results[0].address_components[0].long_name === city){
+  //   const locationData = new Location(city,geoData);
+  //   response.send(locationData);
+  // } else{
+  //   response.send('Josh is amazeballs. ERROR 500!!!!!!!')
+  // }
 
 });
 
@@ -45,6 +60,11 @@ function Weather(city,summary,time){
   this.time = new Date(time*1000).toGMTString();
 }
 
+function errorHandler(error, request,response) {
+  response.status(500).send(error);
+}
+
+//Make sure port is open
 app.listen(PORT, () => {
   console.log(`listening on port: ${PORT}.`)
 });
