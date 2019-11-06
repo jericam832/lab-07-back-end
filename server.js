@@ -22,13 +22,13 @@ app.get('/location', (request, response) => {
 app.get('/weather', (req,res) =>{
   const darkSky = require('./data/darksky.json');
   const	city = req.query.data;
-  let arrayOfDays = [];
-  for (let i = 0 ; i < 8 ; i++){
-    const summary = darkSky.daily.data[i].summary;
-    const time = darkSky.daily.data[i].time;
+  //Get weather data from darksky
+  let arrayOfDays = darkSky.map( d => {
+    const summary = d.daily.data.summary;
+    const time = d.daily.data.time;
     const weatherData = new Weather(city,summary,time);
     arrayOfDays.push(weatherData);
-  }
+  })
   res.send(arrayOfDays);
 })
 
